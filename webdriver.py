@@ -3,8 +3,8 @@ import os
 import time 
 
 def login():
-    driver.find_element_by_id('uname').send_keys("18BCI0033")
-    driver.find_element_by_id('passwd').send_keys('babu2000')
+    driver.find_element_by_id('uname').send_keys("Enter username here")
+    driver.find_element_by_id('passwd').send_keys('Enter password here')
     driver.find_element_by_tag_name('button').click()
     input('Enter the captcha and press enter here')
     
