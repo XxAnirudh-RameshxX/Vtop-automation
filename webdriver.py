@@ -1,10 +1,11 @@
 from selenium import webdriver
 import os
 import time 
+import json
 
 def login():
-    driver.find_element_by_id('uname').send_keys("Enter username here")
-    driver.find_element_by_id('passwd').send_keys('Enter password here')
+    driver.find_element_by_id('uname').send_keys("Enter registration number")
+    driver.find_element_by_id('passwd').send_keys('Enter password')
     driver.find_element_by_tag_name('button').click()
     input('Enter the captcha and press enter here')
     
@@ -69,7 +70,7 @@ def newmarks():
     semesters = [semester for semester in driver.find_element_by_xpath('//*[@id="semesterSubId"]').find_elements_by_tag_name('option')]
     for sem_no in range(1, len(semesters) + 1):
         driver.find_element_by_xpath('//*[@id="semesterSubId"]/option[' + str(sem_no) + ']').click()
-        time.sleep(0.5)
+        time.sleep(1)
         #print(driver.find_element_by_xpath('//*[@id="semesterSubId"]/option[' + str(sem_no) + ']').text)
         #print(driver.find_element_by_xpath('//*[@id="studentMarkView"]/div/div/span[2]').text)
         if driver.find_element_by_xpath('//*[@id="studentMarkView"]/div/div/span[2]').text != 'No data Found':
@@ -83,25 +84,35 @@ def newmarks():
                     for mark_row in range(2, len(driver.find_elements_by_xpath('//*[@id="fixedTableContainer"]/table/tbody/tr[' + str(i + 1) + ']/td/table/tbody/tr')) + 1):
                         exam = driver.find_element_by_xpath('//*[@id="fixedTableContainer"]/table/tbody/tr[' + str(i + 1) + ']/td/table/tbody/tr[' + str(mark_row) + ']/td[2]/output')
                         mark = driver.find_element_by_xpath('//*[@id="fixedTableContainer"]/table/tbody/tr[' + str(i + 1) + ']/td/table/tbody/tr[' + str(mark_row) + ']/td[6]/output')
-                        marks[subject].append((exam.text,mark.text))
+                        marks[subject].append([exam.text,mark.text])
                         #print("\t" + str((exam.text, mark.text)))
                 else:
                     subject = driver.find_element_by_xpath('//*[@id="fixedTableContainer"]/table/tbody/tr[' + str(i + 1) + ']/td[3]').text
                     #print(subject)
                     marks[subject] = []
             #print(str(marks))
-    mark_file = open('marks.txt', 'w+')
-    details = mark_file.read()
-    if str(marks) in details:
-        print('No change in marks')
-    else:
-        print('Some marks have been updated')
-        for sub,mark_list in marks.items():
-            print(sub.upper())
-            for mark in mark_list:
-                print('\t' + str(mark[0]) + ' : ' + str(mark[1]))
-        mark_file.write(str(marks))
-    mark_file.close()
+    with open('marks.json', 'w+') as mark_file:
+        if os.stat('marks.json').st_size != 0:
+            flag = 0
+            details = json.load(mark_file)
+            for subject in marks:
+                if marks[subject] != details.get(subject, " "):
+                    for mark_list in marks[subject]:
+                        if mark_list not in details[subject]:
+                            print(subject + '\t' + mark_list[0] + ":" + mark_list[1])
+                            details[subject].append(mark_list)
+                            flag = 1
+            if flag == 0:
+                print('No change in marks')
+            else:
+                json.dump(details, mark_file, indent = 4)
+        else:
+            for subject, mark_list in marks.items():
+                print(subject)
+                for mark in mark_list:
+                    print('\t' + mark[0] + ' : ' + mark[1])
+            json.dump(marks, mark_file, indent = 4)
+
     
 def attendance():
     if driver.find_element_by_xpath('//*[@id="wrapper"]').get_attribute('class') != 'menuDisplayed':
